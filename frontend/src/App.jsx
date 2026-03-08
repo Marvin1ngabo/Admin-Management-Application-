@@ -16,7 +16,14 @@ import Settings from './pages/Settings'
 import Layout from './components/Layout'
 
 function App() {
-  const { isAuthenticated } = useAuthStore()
+  const { isAuthenticated, user } = useAuthStore()
+
+  // Admin app is only for ADMIN role
+  // Redirect non-admins to client app
+  if (isAuthenticated && user && user.role !== 'ADMIN') {
+    window.location.href = 'http://localhost:3000'
+    return null
+  }
 
   return (
     <Routes>

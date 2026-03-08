@@ -23,6 +23,14 @@ export default function Login() {
         deviceId,
       })
 
+      // Admin app is ONLY for ADMIN role
+      if (data.data.user.role !== 'ADMIN') {
+        toast.error('Access denied. This portal is for administrators only.')
+        toast.info('Please use the client portal at http://localhost:3000')
+        setLoading(false)
+        return
+      }
+
       setAuth(data.data.user, data.data.accessToken, data.data.deviceVerified)
       toast.success('Login successful!')
 
