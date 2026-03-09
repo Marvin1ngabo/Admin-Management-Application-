@@ -18,9 +18,9 @@ import Layout from './components/Layout'
 function App() {
   const { isAuthenticated, user } = useAuthStore()
 
-  // Admin app is only for ADMIN role
-  // Redirect non-admins to client app
-  if (isAuthenticated && user && user.role !== 'ADMIN') {
+  // Staff portal is for TEACHER and ADMIN only
+  // Redirect students and parents to client portal
+  if (isAuthenticated && user && (user.role === 'STUDENT' || user.role === 'PARENT')) {
     window.location.href = 'http://localhost:3000'
     return null
   }

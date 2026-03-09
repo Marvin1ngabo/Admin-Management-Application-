@@ -11,89 +11,7 @@ class DashboardController {
 
       let stats = {};
 
-      if (userRole === 'STUDENT') {
-        // Get student's own data
-        const student = await prisma.student.findUnique({
-          where: { userId },
-          include: {
-            feeAccount: true,
-            class: true,
-          },
-        });
-
-        if (student) {
-          // Calculate balance from transactions
-          const deposits = await prisma.feeTransaction.aggregate({
-            where: {
-              feeAccountId: student.feeAccount.id,
-              type: 'DEPOSIT',
-              status: 'APPROVED',
-            },
-            _sum: { amount: true },
-          });
-
-          const withdrawals = await prisma.feeTransaction.aggregate({
-            where: {
-              feeAccountId: student.feeAccount.id,
-              type: 'WITHDRAWAL',
-              status: 'APPROVED',
-            },
-            _sum: { amount: true },
-          });
-
-          const balance = (deposits._sum.amount || 0) - (withdrawals._sum.amount || 0);
-
-          // Get attendance stats
-          const attendanceRecords = await prisma.attendance.findMany({
-            where: { studentId: student.id },
-          });
-
-          const presentCount = attendanceRecords.filter(a => a.status === 'PRESENT').length;
-          const absentCount = attendanceRecords.filter(a => a.status === 'ABSENT').length;
-          const lateCount = attendanceRecords.filter(a => a.status === 'LATE').length;
-
-          // Get grade stats
-          const grades = await prisma.grade.findMany({
-            where: { studentId: student.id },
-          });
-
-          const averageGrade = grades.length > 0
-            ? grades.reduce((sum, g) => sum + (Number(g.score) / Number(g.maxScore) * 100), 0) / grades.length
-            : 0;
-
-          stats = {
-            balance: Number(balance),
-            className: student.class?.name || 'Not assigned',
-            attendanceRate: attendanceRecords.length > 0 
-              ? ((presentCount / attendanceRecords.length) * 100).toFixed(1)
-              : 0,
-            presentDays: presentCount,
-            absentDays: absentCount,
-            lateDays: lateCount,
-            averageGrade: averageGrade.toFixed(1),
-            totalGrades: grades.length,
-          };
-        }
-      } else if (userRole === 'PARENT') {
-        // Get parent's children data
-        const children = await prisma.student.findMany({
-          where: { parentId: userId },
-          include: {
-            user: true,
-            feeAccount: true,
-            class: true,
-          },
-        });
-
-        stats = {
-          totalChildren: children.length,
-          children: children.map(child => ({
-            id: child.id,
-            name: `${child.user.firstName} ${child.user.lastName}`,
-            className: child.class?.name || 'Not assigned',
-          })),
-        };
-      } else if (userRole === 'TEACHER') {
+      if (userRole === 'TEACHER') {
         // Get teacher's classes
         const teacher = await prisma.teacher.findUnique({
           where: { userId },
@@ -112,6 +30,57 @@ class DashboardController {
           totalClasses: teacher?.classes.length || 0,
           totalStudents,
           subjects: teacher?.subjects || [],
+        };
+      } else if (userRole === 'ADMIN') {
+        // Get admin stats
+        const totalStudents = await prisma.student.count();
+        const totalTeachers = await prisma.teacher.count();
+
+        // Calculate attendance rate
+        const attendanceRecords = await prisma.attendance.findMany();
+        const presentCount = attendanceRecords.filter(a => a.status === 'PRESENT').length;
+        const attendanceRate = attendanceRecords.length > 0
+          ? ((presentCount / attendanceRecords.length) * 100).toFixed(1)
+          : 0;
+
+        // Calculate fee collection (approved deposits this month)
+        const startOfMonth = new Date();
+        startOfMonth.setDate(1);
+        startOfMonth.setHours(0, 0, 0, 0);
+
+        const deposits = await prisma.feeTransaction.aggregate({
+          where: {
+            type: 'DEPOSIT',
+            status: 'APPROVED',
+            createdAt: {
+              gte: startOfMonth,
+            },
+          },
+          _sum: { amount: true },
+        });
+
+        const feeCollection = deposits._sum.amount || 0;
+
+        // Get pending devices
+        const pendingDevices = await prisma.device.count({
+          where: { verified: false },
+        });
+
+        // Get pending withdrawals
+        const pendingWithdrawals = await prisma.feeTransaction.count({
+          where: {
+            type: 'WITHDRAWAL',
+            status: 'PENDING',
+          },
+        });
+
+        stats = {
+          totalStudents,
+          totalTeachers,
+          attendanceRate,
+          feeCollection,
+          pendingDevices,
+          pendingWithdrawals,
         };
       }
 

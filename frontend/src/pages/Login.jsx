@@ -23,9 +23,9 @@ export default function Login() {
         deviceId,
       })
 
-      // Admin app is ONLY for ADMIN role
-      if (data.data.user.role !== 'ADMIN') {
-        toast.error('Access denied. This portal is for administrators only.')
+      // Staff portal is for TEACHER and ADMIN only
+      if (data.data.user.role !== 'TEACHER' && data.data.user.role !== 'ADMIN') {
+        toast.error('Access denied. This portal is for staff members only.')
         toast.info('Please use the client portal at http://localhost:3000')
         setLoading(false)
         return
