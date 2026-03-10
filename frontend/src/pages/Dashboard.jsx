@@ -17,6 +17,10 @@ export default function Dashboard() {
   const isTeacher = user?.role === 'TEACHER'
   const isAdmin = user?.role === 'ADMIN'
 
+  console.log('Dashboard - User:', user)
+  console.log('Dashboard - isTeacher:', isTeacher)
+  console.log('Dashboard - isAdmin:', isAdmin)
+
   const greeting = () => {
     const hour = new Date().getHours()
     if (hour < 12) return 'Good morning'

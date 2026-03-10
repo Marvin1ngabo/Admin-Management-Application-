@@ -10,6 +10,7 @@ import Teachers from './pages/Teachers'
 import Classes from './pages/Classes'
 import Fees from './pages/Fees'
 import Grades from './pages/Grades'
+import Attendance from './pages/Attendance'
 import Timetable from './pages/Timetable'
 import Notifications from './pages/Notifications'
 import Settings from './pages/Settings'
@@ -39,6 +40,7 @@ function App() {
         <Route path="classes" element={<Classes />} />
         <Route path="fees" element={<Fees />} />
         <Route path="grades" element={<Grades />} />
+        <Route path="attendance" element={<Attendance />} />
         <Route path="timetable" element={<Timetable />} />
         <Route path="notifications" element={<Notifications />} />
         <Route path="devices" element={<Devices />} />

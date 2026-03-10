@@ -7,6 +7,9 @@ export default function Layout() {
   const { user, logout } = useAuthStore()
   const location = useLocation()
 
+  const isTeacher = user?.role === 'TEACHER'
+  const isAdmin = user?.role === 'ADMIN'
+
   const { data: pendingDevices } = useQuery({
     queryKey: ['pendingDevicesCount'],
     queryFn: async () => {
@@ -14,9 +17,11 @@ export default function Layout() {
       return data.data?.length || 0
     },
     refetchInterval: 30000,
+    enabled: isAdmin, // Only fetch for admins
   })
 
-  const navItems = [
+  // Admin gets full access
+  const adminNavItems = [
     { path: '/dashboard', label: 'Dashboard', icon: '📊' },
     { path: '/users', label: 'Users', icon: '👥' },
     { path: '/students', label: 'Students', icon: '🎓' },
@@ -29,6 +34,17 @@ export default function Layout() {
     { path: '/devices', label: 'Device Approvals', icon: '📱', badge: pendingDevices },
     { path: '/settings', label: 'Settings', icon: '⚙️' },
   ]
+
+  // Teacher gets limited access - only their teaching functions
+  const teacherNavItems = [
+    { path: '/dashboard', label: 'Dashboard', icon: '📊' },
+    { path: '/grades', label: 'Enter Grades', icon: '📝' },
+    { path: '/attendance', label: 'Mark Attendance', icon: '✅' },
+    { path: '/timetable', label: 'My Timetable', icon: '📅' },
+    { path: '/notifications', label: 'Notifications', icon: '🔔' },
+  ]
+
+  const navItems = isTeacher ? teacherNavItems : adminNavItems
 
   return (
     <div className="flex h-screen bg-[#F8FAFC]">
